@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./DownTown-Services-Backend/downtown_services
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./DownTown-Services-Backend/downtown_services/.env
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - app-network
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+
+  celery:
+    build:
+      context: ./DownTown-Services-Backend/downtown_services
+    command: celery -A downtown_services worker --loglevel=info --pool=threads
+    env_file:
+      - ./DownTown-Services-Backend/downtown_services/.env
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - app-network
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+
+  redis:
+    image: redis:6.2
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data
+  
+  postgres:
+    image: postgres:13
+    env_file:
+      - ./DownTown-Services-Backend/downtown_services/.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    ports:
+      - "5432:5432"
+
+  frontend:
+    build:
+      context: ./DownTown-Services-Frontend/frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./DownTown-Services-Frontend/frontend/.env
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  redis-data:
+  postgres-data:
