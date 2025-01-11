@@ -29,9 +29,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', '35.225.114.235', 'elbin.site', 'www.elbin.site']
 
 
 # Application definition
@@ -73,6 +73,11 @@ CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://35.225.114.235',
+  'http://frontend:3000',
+  'http://elbin.site',
+  'https://elbin.site',
+  'https://www.elbin.site',
 )
 
 

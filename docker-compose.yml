@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./DownTown-Services-Backend/downtown_services/.env
+      - ./downtown_services/backend/.env
     depends_on:
       - redis
       - postgres
@@ -53,7 +53,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./DownTown-Services-Frontend/frontend/.env
+      - ./downtown_services/frontend/.env
     networks:
       - app-network
 
