@@ -37,9 +37,9 @@ function AcceptedServices() {
   }
 
   return (
-    <div className="bg-white w-1/3 shadow-md rounded overflow-hidden">
+    <div className="bg-white shadow-md rounded overflow-hidden">
       <div className="flex justify-between items-center py-4 px-6 bg-gray-50 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800">Accepted Services</h2>
+        <h2 className="text-lg font-semibold text-gray-800">Uncompleted Services</h2>
         <button
           onClick={() => navigate('/worker/services/accepted')}
           className="text-sm font-semibold text-stone-600 hover:text-yellow-600 transition-colors duration-200 flex items-center"

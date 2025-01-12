@@ -82,7 +82,7 @@ function Navbar({setChats}) {
   return (
     <>
       {activePopup==='location' && <Location role={'worker'} location={location} setLocation={setLocation} setActivePopup={setActivePopup}/>}
-      <div className='flex justify-between w-full flex-column fixed top-0 z-20 bg-[#eff8f4] h-24 items-center px-5 sm:px-20 md:px-20'>
+      <div className='flex justify-between w-full flex-column fixed top-0 z-20 bg-[#eff8f4] h-24 items-center px-5 sm:px-20 md:px-20 shadow-sm'>
         <div className="logo cursor-pointer h-1/3 items-center flex gap-8">
           <img src={Logo} alt="Logo" onClick={() => { navigate('/worker/dashboard/') }}/>
           <div className={`border-x px-4 py-5 cursor-pointer border-[#25252557] w-auto h-full flex items-center ${window.location.pathname.includes('add-service')&& 'bg-[#f9f5e1] border-x-0'}`}  onClick={() => { navigate('/worker/add-service/') }}>

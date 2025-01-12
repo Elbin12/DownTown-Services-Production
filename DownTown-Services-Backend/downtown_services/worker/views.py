@@ -25,9 +25,11 @@ from accounts.serializer import OrdersListingSerializer
 import os, json, stripe
 from datetime import datetime
 from accounts.tasks import send_notification
-from django.db.models import Q, OuterRef, Subquery, Avg, Sum
+from django.db.models import Q, OuterRef, Subquery, Avg, Sum, Count
 
 from .utils import update_subscription_plan, cancel_subscription
+from django.utils import timezone
+from django.db.models.functions import TruncDate
 # Create your views here.
 
 
@@ -647,21 +649,105 @@ class Dashboard(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
-        worker_status = request.user.worker_profile.is_available
-        services_completed = Orders.objects.filter(service_provider=request.user, order_payment__status='paid')
-        revenue = sum([service.order_payment.total_amount for service in services_completed])
-        # Count completed orders
-        services_count = services_completed.count()
+        worker = request.user  # Assuming the logged-in user is a CustomWorker
+        worker_profile = worker.worker_profile
+        
+        # Get current date and date 30 days ago for filtering
+        today = timezone.now()
+        thirty_days_ago = today - timedelta(days=30)
+        
+        # Basic Profile Information
+        profile_info = {
+            'name': f"{worker_profile.first_name} {worker_profile.last_name}",
+            'email': worker.email,
+            'subscription_status': worker_profile.worker_subscription.subscription_status if hasattr(worker_profile, 'worker_subscription') else 'No subscription',
+            'is_available': worker_profile.is_available,
+        }
+        
+        # Subscription Usage Metrics
+        if hasattr(worker_profile, 'worker_subscription'):
+            subscription = worker_profile.worker_subscription
+            subscription_metrics = {
+                'tier_name': subscription.tier_name,
+                'services_added': f"{subscription.services_added}/{subscription.service_add_limit}",
+                'services_updated': f"{subscription.services_updated}/{subscription.service_update_limit}",
+                'requests_handled': f"{subscription.user_requests_handled}/{subscription.user_requests_limit}",
+                'subscription_end_date': subscription.subscription_end_date,
+            }
+        else:
+            subscription_metrics = None
 
-        # Calculate average rating
-        reviews = Review.objects.filter(order__service_provider=request.user)
-        average_rating = reviews.aggregate(Avg('rating')).get('rating__avg', 0) or 0
-        feedback = reviews.values('review', 'rating', 'created_at')[:5]
+        # Service Statistics
+        services = worker.services.all()
+        service_stats = {
+            'total_active_services': services.filter(is_active=True, is_deleted=False).count(),
+            'total_listed_services': services.filter(is_listed=True).count(),
+            'services_by_category': services.values('category__category_name').annotate(count=Count('id')),
+        }
 
-        orders_last_week, revenue_last_week, labels = get_sales_chart_data(request)
+        # Order Statistics (last 30 days)
+        orders = worker.serviced_orders.all()
+        order_stats = {
+            'total_orders': orders.count(),
+            'completed_orders': orders.filter(order_payment__status='paid').count(),
+            'pending_orders': orders.filter(status='pending').count(),
+            'working_orders': orders.filter(status='working').count(),
+            'cancelled_orders': orders.filter(status='cancelled').count(),
+            'daily_orders': orders.annotate(date=TruncDate('created_at')).values('date').annotate(count=Count('id')),
+        }
 
-        return Response({'status':worker_status, 'revenue':revenue, 'services_count':services_count, 'average_rating':average_rating, 'feedback': feedback,
-                         'orders_last_week':orders_last_week, 'revenue_last_week':revenue_last_week, 'labels':labels }, status=status.HTTP_200_OK)
+        # Revenue Statistics (last 30 days)
+        revenue_stats = {
+            'total_revenue': orders.filter(status='completed').aggregate(Sum('service_price'))['service_price__sum'] or 0,
+            'average_order_value': orders.filter(status='completed').aggregate(Avg('service_price'))['service_price__avg'] or 0,
+        }
+
+        # Current Requests
+        current_requests = worker_profile.request.filter(
+            created_at__gte=thirty_days_ago
+        ).order_by('-created_at')
+        request_stats = {
+            'total_requests': current_requests.count(),
+            'pending_requests': current_requests.filter(status='request_sent').count(),
+            'accepted_requests': current_requests.filter(status='accepted').count(),
+        }
+
+        # Wallet Information
+        try:
+            wallet = worker.wallet.first()
+            wallet_info = {
+                'current_balance': wallet.balance,
+                'recent_transactions': wallet.transactions.order_by('-created_at')[:5].values(
+                    'transaction_type', 'amount', 'status', 'created_at'
+                ),
+            }
+        except AttributeError:
+            wallet_info = None
+
+        # Reviews and Ratings (last 30 days)
+        reviews = worker.serviced_orders.filter(
+            created_at__gte=thirty_days_ago,
+            review__isnull=False
+        ).values('review__rating', 'review__review', 'review__created_at')
+        
+        review_stats = {
+            'total_reviews': len(reviews),
+            'average_rating': sum(r['review__rating'] for r in reviews) / len(reviews) if reviews else 0,
+            'recent_reviews': list(reviews)[:5],
+        }
+
+        response_data = {
+            'profile_info': profile_info,
+            'subscription_metrics': subscription_metrics,
+            'service_stats': service_stats,
+            'order_stats': order_stats,
+            'revenue_stats': revenue_stats,
+            'request_stats': request_stats,
+            'wallet_info': wallet_info,
+            'review_stats': review_stats,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
     def post(self, request):
         worker_status = request.data.get('status', None)

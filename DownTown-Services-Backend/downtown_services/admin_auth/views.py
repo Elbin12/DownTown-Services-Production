@@ -4,14 +4,20 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from accounts.models import CustomUser, Orders
 from accounts.serializer import OrdersListingSerializer
-from worker.models import CustomWorker
 from .models import Categories, SubCategories, Subscription
 from .serializer import GetUsers, GetWorkers, GetCategories, SubcategorySerializer, SubscriptionsSerializer
 from accounts.views import token_generation_and_set_in_cookie
 from worker.models import Services
 from worker.serializer import ServiceSerializer
 from .utils import send_email_for_worker_reject
-from django.db.models import Q
+from django.db.models import Count, Sum, Avg, Q
+
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import TruncMonth
+
+from accounts.models import OrderPayment, Review, Wallet, Transaction
+from worker.models import WorkerProfile, WorkerSubscription, CustomWorker, Requests
 # Create your views here.
 
 
@@ -31,6 +37,147 @@ class Login(APIView):
         response = token_generation_and_set_in_cookie(user)
         
         return response
+    
+class Dashboard(APIView):
+    def get(self, request):
+        # Get current date and last month date
+        today = timezone.now()
+        last_month = today - timedelta(days=30)
+        
+        # User Statistics
+        total_users = CustomUser.objects.count()
+        new_users_this_month = CustomUser.objects.filter(
+            date_joined__gte=last_month
+        ).count()
+        
+        # Worker Statistics
+        total_workers = CustomWorker.objects.count()
+        active_workers = WorkerProfile.objects.filter(
+            is_available=True
+        ).count()
+        verified_workers = CustomWorker.objects.filter(
+            status='verified'
+        ).count()
+        
+        # Service Statistics
+        total_services = Services.objects.count()
+        active_services = Services.objects.filter(
+            is_listed=True
+        ).count()
+        services_by_category = Categories.objects.annotate(
+            service_count=Count('services')
+        ).values('category_name', 'service_count')
+        
+        # Order Statistics
+        total_orders = Orders.objects.count()
+        orders_by_status = Orders.objects.values('status').annotate(
+            count=Count('id')
+        )
+        recent_orders = Orders.objects.select_related(
+            'user', 'service_provider'
+        ).order_by('-created_at')[:5]
+        
+        # Revenue Statistics
+        total_revenue = OrderPayment.objects.filter(
+            status='paid'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        monthly_revenue = OrderPayment.objects.filter(
+            status='paid'
+        ).annotate(
+            month=TruncMonth('created_at')
+        ).values('month').annotate(
+            total=Sum('total_amount')
+        ).order_by('month')
+        
+        # # Reviews & Ratings
+        # average_rating = Review.objects.aggregate(
+        #     avg_rating=Avg('rating')
+        # )['avg_rating'] or 0
+        # total_reviews = Review.objects.count()
+        
+        # Subscription Statistics
+        total_subscribed_workers = WorkerProfile.objects.filter(
+            is_subscribed=True
+        ).count()
+        subscription_by_tier = WorkerSubscription.objects.values(
+            'tier_name'
+        ).annotate(count=Count('id'))
+        
+        # Request Statistics
+        pending_requests = CustomWorker.objects.filter(
+            status='in_review'
+        ).count()
+        # requests_by_status = Requests.objects.values('status').annotate(
+        #     count=Count('id')
+        # )
+        
+        # Wallet Statistics
+        # total_wallet_balance = Wallet.objects.aggregate(
+        #     total=Sum('balance')
+        # )['total'] or 0
+
+        recent_transactions = Transaction.objects.select_related(
+            'wallet'
+        ).order_by('-created_at')[:5]
+
+        response_data = {
+            'user_stats': {
+                'total_users': total_users,
+                'new_users_this_month': new_users_this_month,
+            },
+            'worker_stats': {
+                'total_workers': total_workers,
+                'active_workers': active_workers,
+                'verified_workers': verified_workers,
+            },
+            'service_stats': {
+                'total_services': total_services,
+                'active_services': active_services,
+                'services_by_category': list(services_by_category),
+            },
+            'order_stats': {
+                'total_orders': total_orders,
+                'orders_by_status': list(orders_by_status),
+                'recent_orders': [{
+                    'id': order.id,
+                    'service_name': order.service_name,
+                    'user': order.user.email,
+                    'provider': order.service_provider.email,
+                    'status': order.status,
+                    'created_at': order.created_at,
+                    'service_price': order.service_price
+                } for order in recent_orders],
+            },
+            'revenue_stats': {
+                'total_revenue': total_revenue,
+                'monthly_revenue': list(monthly_revenue),
+            },
+            # 'review_stats': {
+            #     'average_rating': round(average_rating, 1),
+            #     'total_reviews': total_reviews,
+            # },
+            'subscription_stats': {
+                'total_subscribed_workers': total_subscribed_workers,
+                'subscription_by_tier': list(subscription_by_tier),
+            },
+            'request_stats': {
+                'pending_requests': pending_requests,
+                # 'requests_by_status': list(requests_by_status),
+            },
+            'wallet_stats': {
+                # 'total_wallet_balance': total_wallet_balance,
+                'recent_transactions': [{
+                    'id': tx.id,
+                    'type': tx.transaction_type,
+                    'amount': tx.amount,
+                    'status': tx.status,
+                    'created_at': tx.created_at
+                } for tx in recent_transactions],
+            }
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     
 
 class Users(APIView):
@@ -113,7 +260,7 @@ class Worker(APIView):
             return Response({'error':'Something went wrong'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
-class Requests(APIView):
+class FetchRequests(APIView):
     permission_classes = [permissions.IsAdminUser]
     def get(self, request):
         workers = CustomWorker.objects.exclude(Q(status='verified')|Q(status='rejected')).order_by('date_joined')

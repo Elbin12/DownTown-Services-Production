@@ -3,54 +3,65 @@ import Logo from '../../images/LOGO.png';
 import { MdSpaceDashboard } from "react-icons/md";
 import { FaUsers } from "react-icons/fa";
 import { PiUsersThree } from "react-icons/pi";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { TiSpanner } from "react-icons/ti";
 import { BiCategory } from "react-icons/bi";
 
 
+const navItems = [
+  { path: '/admin/dashboard/', icon: MdSpaceDashboard, label: 'Dashboard' },
+  { path: '/admin/users/', icon: PiUsersThree, label: 'Users' },
+  { path: '/admin/workers/', icon: FaUsers, label: 'Workers' },
+  { path: '/admin/requests/', icon: FaUsers, label: 'Requests' },
+  { path: '/admin/services/', icon: TiSpanner, label: 'Services' },
+  { path: '/admin/orders/', icon: TiSpanner, label: 'Orders' },
+  { path: '/admin/categories/', icon: BiCategory, label: 'Categories' },
+  { path: '/admin/subscriptions/', icon: BiCategory, label: 'Subscriptions' },
+]
+
 function Sidebar() {
+  const location = useLocation()
+
+
+  
   return (
-    <div className='w-1/6 h-screen fixed pt-24 flex-col justify-center bg-[#CEE7E6]'>
-      {/* <div className='p-6'>
-        <img src={Logo} alt="" />
+    <aside className="w-64 h-screen fixed left-0 top-0 pt-24 bg-teal-50 shadow-lg flex flex-col transition-all duration-300 ease-in-out">
+      {/* <div className="p-6 flex justify-center items-center">
+        <img src={Logo} alt="Logo" className="h-12 w-auto" />
       </div> */}
-      <div className='flex flex-col gap-6 items-center mt-11'>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('dashboard')&&'bg-[#BACBDF]'}`}>
-            <MdSpaceDashboard className={`${window.location.pathname.includes('dashboard')&& 'text-2xl font-semibold'}`}/>
-            <li className='list-none '>
-              <Link to="/admin/dashboard/" className={`${window.location.pathname.includes('dashboard')&& 'text-[#658ab7] font-semibold'}`}>Dashboard</Link>
-            </li>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('user')&&'bg-[#BACBDF]'}`}>
-            <PiUsersThree className={`${window.location.pathname.includes('user')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/users/" className={`${window.location.pathname.includes('user')&& 'text-[#658ab7] font-semibold'}`}>Users</Link>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('worker')&&'bg-[#BACBDF]'}`}>
-            <FaUsers className={`${window.location.pathname.includes('worker')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/workers/" className={`${window.location.pathname.includes('worker')&& 'text-[#658ab7] font-semibold'}`}>Workers</Link>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('requests') || window.location.pathname.includes('request') &&'bg-[#BACBDF]'}`}>
-            <FaUsers className={`${window.location.pathname.includes('requests')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/requests/" className={`${window.location.pathname.includes('requests')&& 'text-[#658ab7] font-semibold'}`}>Requests</Link>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('services')&&'bg-[#BACBDF]'}`}>
-            <TiSpanner className={`${window.location.pathname.includes('services')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/services/" className={`${window.location.pathname.includes('services')&& 'text-[#658ab7] font-semibold'}`}>Services</Link>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('orders')&&'bg-[#BACBDF]'}`}>
-            <TiSpanner className={`${window.location.pathname.includes('orders')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/orders/" className={`${window.location.pathname.includes('orders')&& 'text-[#658ab7] font-semibold'}`}>Orders</Link>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('categories')&&'bg-[#BACBDF]'}`}>
-            <BiCategory className={`${window.location.pathname.includes('categories')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/categories/" className={`${window.location.pathname.includes('categories')&& 'text-[#658ab7] font-semibold'}`}>Categories</Link>
-        </div>
-        <div className={`flex items-center gap-1 w-8/12 py-4 pl-4 justify-start ${window.location.pathname.includes('subscriptions')&&'bg-[#BACBDF]'}`}>
-            <BiCategory className={`${window.location.pathname.includes('subscriptions')&& 'text-2xl font-semibold'}`}/>
-            <Link to="/admin/subscriptions/" className={`${window.location.pathname.includes('categories')&& 'text-[#658ab7] font-semibold'}`}>Subscriptions</Link>
-        </div>
+      <nav className="flex-1 overflow-y-auto">
+        <ul className="space-y-3 py-4">
+          {navItems.map((item) => {
+            const isActive = location.pathname.includes(item.path)
+            return (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className={`flex items-center px-6 py-4 text-sm font-medium  transition-colors duration-150 ease-in-out
+                    ${
+                      isActive
+                        ? 'bg-[#9abbc9c7] text-primary'
+                        : 'text-gray-600 hover:bg-[#b3d0dcc7] hover:text-primary'
+                    }`} 
+                >
+                  <item.icon
+                    className={`w-5 h-5 mr-3 ${
+                      isActive ? 'text-primary' : 'text-gray-400'
+                    }`}
+                  />
+                  {item.label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+      <div className="p-4 border-t border-teal-100">
+        <p className="text-sm text-gray-500 text-center">
+          © 2025 DownTown Services
+        </p>
       </div>
-    </div>
+    </aside>
   )
 }
 
