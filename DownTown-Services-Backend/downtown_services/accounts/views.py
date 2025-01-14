@@ -27,11 +27,15 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.models import AnonymousUser
 from accounts.authenticate import customAuthentication
 
+from decimal import Decimal
 # Create your views here.
 
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+BACKEND_BASE_URL = settings.BACKEND_BASE_URL
+FRONTEND_BASE_URL = settings.FRONTEND_BASE_URL
 
 
 def send_email(request, email, mob=None):
@@ -578,8 +582,8 @@ class CreatePayment(APIView):
                 payment_method_types=['card'],
                 mode='payment',
                 line_items=line_items,
-                success_url=f"http://localhost:8000/payment-success/{order.id}/",
-                cancel_url=f"http://localhost:8000/payment-cancel/",
+                success_url=f"{BACKEND_BASE_URL}/payment-success/{order.id}/",
+                cancel_url=f"{BACKEND_BASE_URL}/payment-cancel/",
                 metadata={'order_id': order_id},
             )
 
@@ -606,9 +610,9 @@ class PaymentSuccess(APIView):
             request_obj.status = 'completed'
             request_obj.save()
             wallet = order.service_provider.wallet
-            amount = order.service_price - (order.service_price* (order.service_provider.worker_profile.worker_subscription.platform_fee_perc/100))
+            amount = int(Decimal(order.service_price) - (Decimal(order.service_price) * Decimal(order.service_provider.worker_profile.worker_subscription.platform_fee_perc) / Decimal(100)))
             wallet.add_balance(amount)
-            frontend_url = f"http://localhost:3000/payment/success/{pk}/"
+            frontend_url = f"{FRONTEND_BASE_URL}/payment/success/{pk}/"
             return HttpResponseRedirect(frontend_url)
         except Orders.DoesNotExist:
             return Response({'error':'order not found'}, status=status.HTTP_400_BAD_REQUEST)
@@ -637,7 +641,7 @@ class WalletPayment(APIView):
             request_obj.save()
 
             wallet = order.service_provider.wallet
-            amount = order.service_price - (order.service_price* (order.service_provider.worker_profile.worker_subscription.platform_fee_perc/100))
+            amount = int(Decimal(order.service_price) - (Decimal(order.service_price) * Decimal(order.service_provider.worker_profile.worker_subscription.platform_fee_perc) / Decimal(100)))
             wallet.add_balance(amount)
             return Response(status=status.HTTP_200_OK)
         except Orders.DoesNotExist:
@@ -685,7 +689,7 @@ class update_interaction(APIView):
         except Review.DoesNotExist:
             return Response({'error':'Review not found'}, status=status.HTTP_404_NOT_FOUND)
         
-class   WalletView(APIView):
+class WalletView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):

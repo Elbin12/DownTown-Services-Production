@@ -60,6 +60,7 @@ class WorkerRegisterSerializer(serializers.ModelSerializer):
         
         worker = CustomWorker.objects.create(**validated_data)
         profile = WorkerProfile.objects.create(user=worker, **profile_data)
+        Wallet.objects.create(worke=worker)
 
         if cert_img:
             file_extension = os.path.splitext(cert_img.name)[1]

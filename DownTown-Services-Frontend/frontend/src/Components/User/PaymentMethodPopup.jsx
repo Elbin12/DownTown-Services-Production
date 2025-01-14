@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { CreditCard, Wallet, Banknote, X } from 'lucide-react'
 import { api } from '../../axios'
+import { toast } from 'sonner'
 
 const paymentMethods = [
   { id: 'stripe', name: 'Online Payment (Stripe)', icon: <CreditCard className="w-6 h-6" /> },
   { id: 'wallet', name: 'Wallet', icon: <Wallet className="w-6 h-6" /> },
-  { id: 'cash', name: 'Cash', icon: <Banknote className="w-6 h-6" /> },
+  // { id: 'cash', name: 'Cash', icon: <Banknote className="w-6 h-6" /> },
 ]
 
 export default function PaymentMethodPopup({setIsLoading, id, stripePromise, setError}) {
@@ -33,6 +34,16 @@ export default function PaymentMethodPopup({setIsLoading, id, stripePromise, set
         } finally {
             setIsLoading(false);
         }
+    }else if (selectedMethod.id === 'wallet'){
+      try{
+        const res = api.post('wallet_payment/', {'order_id':id})
+        if (res.status === 200){
+          toast.success('Payment successfull')
+          window.location.reload();
+        }
+      }catch (err){
+        console.log('err', err)
+      }
     }
   }
 

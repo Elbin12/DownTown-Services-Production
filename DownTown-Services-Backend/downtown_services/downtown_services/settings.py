@@ -236,11 +236,15 @@ STRIPE_SECRET_KEY  = os.getenv('STRIPE_SECRET_KEY')
 
 ASGI_APPLICATION = 'downtown_services.asgi.application'
 
+BACKEND_BASE_URL = os.getenv('BACKEND_BASE_URL')
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL')
+
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('localhost', 6379)],
+            'hosts': [('redis', 6379)],
             'prefix': 'channels',
         },
     },
@@ -249,7 +253,7 @@ CHANNEL_LAYERS = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': 'redis://redis:6379/1',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }

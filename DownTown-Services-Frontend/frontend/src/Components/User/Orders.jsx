@@ -74,14 +74,14 @@ function Orders({role}) {
                         <h1>Rs. {order?.payment_details?.total_amount}</h1>
                     </div>
                 </div>
-                {filter === 'completed' && role === 'user' && (
+                {/* {filter === 'completed' && role === 'user' && (
                     <div className='flex justify-end items-start mt-4 md:mt-0'>
                         <AlertCircle className='w-4 h-4 mr-1 text-red-500' onClick={(e) => {
                             e.stopPropagation()
                             handleReport(order.id)
                         }}/>
                     </div>
-                )}
+                )} */}
             </div>
         ))}
       </div>

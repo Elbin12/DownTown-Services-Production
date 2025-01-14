@@ -37,6 +37,12 @@ function Navbar({setChats}) {
     libraries: ["places"],
   });
 
+  useEffect(()=>{
+      if (!location){
+        setActivePopup('location');
+      }
+    })
+
   const logout  = async ()=>{
     const res = await api.post('worker/logout/')
     if(res.status == 205){
@@ -44,9 +50,12 @@ function Navbar({setChats}) {
       navigate('/')
     }
   }
+
+  const DOMAIN = process.env.REACT_APP_DOMAIN
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   
   useEffect(() => {
-    const socket = new WebSocket(`ws://localhost:8000/ws/notification/${workerinfo.id}/`);
+    const socket = new WebSocket(`${protocol}://${DOMAIN}/ws/notification/${workerinfo.id}/`);
 
     socket.onopen = () => {
       console.log("WebSocket connection opened");

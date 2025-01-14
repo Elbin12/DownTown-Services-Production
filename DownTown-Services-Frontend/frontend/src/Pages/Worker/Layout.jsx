@@ -18,7 +18,7 @@ function Layout({children}) {
 
     const location = useLocation();
 
-    const excludePaths = ["/worker/login/", "/worker/signup/"];
+    const excludePaths = ["/worker/login/", "/worker/signup/", "/worker/login", "/worker/signup"];
 
     const shouldShowLayout = !excludePaths.includes(location.pathname);
 

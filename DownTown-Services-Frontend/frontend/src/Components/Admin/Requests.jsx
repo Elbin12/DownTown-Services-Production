@@ -44,7 +44,7 @@ function Requests() {
                 className="bg-white cursor-pointer shadow-lg hover:shadow-xl text-gray-700 px-6 py-5 rounded-lg flex flex-col gap-4 w-64 transition-all duration-300"
             >
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" onClick={()=>{navigate(`/admin/request/${worker.id}/`)}}>
                         <MdEmail className="text-gray-500 text-lg" />
                         <h4 className="font-medium">{worker?.email}</h4>
                     </div>

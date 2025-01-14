@@ -126,8 +126,8 @@ function Dashboard() {
         {/* Header Section */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome, {dashboardData.profile_info.name}</h1>
-            <p className="text-gray-600 mt-2">Subscription: {dashboardData.subscription_metrics.tier_name}</p>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome, {dashboardData?.profile_info?.name}</h1>
+            <p className="text-gray-600 mt-2">Subscription: {dashboardData?.subscription_metrics?.tier_name}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <button
@@ -231,11 +231,11 @@ function Dashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Wallet</h3>
           <div className="mb-4">
-            <p className="text-2xl font-bold">₹{dashboardData.wallet_info.current_balance}</p>
+            <p className="text-2xl font-bold">₹{dashboardData?.wallet_info?.current_balance}</p>
             <p className="text-sm text-gray-600">Current Balance</p>
           </div>
           <div className="space-y-2">
-            {dashboardData.wallet_info.recent_transactions.map((transaction, index) => (
+            {dashboardData.wallet_info?.recent_transactions.map((transaction, index) => (
               <div key={index} className="flex justify-between items-center py-2 border-b">
                 <span className={transaction.transaction_type === 'credit' ? 'text-green-600' : 'text-red-600'}>
                   {transaction.transaction_type === 'credit' ? '+' : '-'}₹{transaction.amount}

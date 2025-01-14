@@ -68,8 +68,11 @@ function ChatDetails({  role,  setIsChatOpen, user, setSelectedChatId={setSelect
       ? `${sender_id}/${user.id}`
       : `${user.id}/${sender_id}`;
 
+  const DOMAIN = process.env.REACT_APP_DOMAIN
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+
   useEffect(() => {
-    const socket = new WebSocket(`ws://localhost:8000/ws/chat/${role}/${chatGroupId}/`);
+    const socket = new WebSocket(`${protocol}://${DOMAIN}/ws/chat/${role}/${chatGroupId}/`);
 
     socket.onopen = () => {
       console.log("WebSocket connection opened");
@@ -90,7 +93,7 @@ function ChatDetails({  role,  setIsChatOpen, user, setSelectedChatId={setSelect
 
   const sendMessage = () => {
     if (newMessage.trim()) {
-      const socket = new WebSocket(`ws://localhost:8000/ws/chat/${role}/${chatGroupId}/`);
+      const socket = new WebSocket(`${protocol}://${DOMAIN}/ws/chat/${role}/${chatGroupId}/`);
       socket.onopen = () => {
         socket.send(
           JSON.stringify({

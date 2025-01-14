@@ -14,6 +14,7 @@ import { useLoadScript } from "@react-google-maps/api";
 import { IoIosNotifications } from 'react-icons/io';
 import { useChat } from '../../../context';
 import { BiSolidMessageDetail } from "react-icons/bi";
+import { BASE_URL } from '../../../axios';
 
 
 function Navbar() {
@@ -40,14 +41,17 @@ function Navbar() {
   });
 
   useEffect(()=>{
-    // if (!location){
-    //   setActivePopup('location');
-    // }
+    if (!location){
+      setActivePopup('location');
+    }
   })
 
+  const DOMAIN = process.env.REACT_APP_DOMAIN
+
+  console.log(DOMAIN, 'domainfnv', BASE_URL)
   
   useEffect(()=>{
-    const socket = new WebSocket(`ws://localhost:8000/ws/notification/${userinfo.id}/`);
+    const socket = new WebSocket(`wss://${DOMAIN}/ws/notification/${userinfo.id}/`);
 
     console.log('ooooo')
     socket.onopen = function () {
