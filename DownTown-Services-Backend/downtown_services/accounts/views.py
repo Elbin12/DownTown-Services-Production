@@ -76,6 +76,9 @@ def token_generation_and_set_in_cookie(user, additional_data=None):
         'isAdmin' : user.is_superuser,
         'isWorker': user.is_staff,
         'email':user.email,
+        'lat':user.lat,
+        'lng':user.lng,
+        'location':user.location
     }
 
     print('from token')
@@ -143,7 +146,10 @@ class VerifyOTP(APIView):
                 try:
                     user = CustomUser.objects.get(email=email)
                 except:
-                    user = CustomUser.objects.create_user(email=email, mob=mob)
+                    location = request.session.get('location')
+                    lat = request.session.get('lat')
+                    lng = request.session.get('lng')
+                    user = CustomUser.objects.create_user(email=email, mob=mob, location=location, lat=lat, lng=lng)
                     user.save()
                 if not user.is_active:
                     return Response({'message':'You are Blocked by admin'}, status=status.HTTP_400_BAD_REQUEST)
