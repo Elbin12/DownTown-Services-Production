@@ -99,6 +99,8 @@ function ServiceDetail({setIsChatOpen, setRecipient_id, setWorker}) {
         console.log(err, 'err');
         if(err.status === 401){
           toast.error('Please login to the site')
+        }else if(err.status === 400){
+          toast.error(err.response.data?.message && err.response.data.message)
         }
       }
       

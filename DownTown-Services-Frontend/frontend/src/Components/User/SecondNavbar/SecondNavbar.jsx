@@ -8,7 +8,6 @@ function SecondNavbar({role}) {
         <h6 className={`p-2 sm:p-3 cursor-pointer ${window.location.pathname.includes('profile')&&'bg-[#dcce9b65] font-semibold'}`} onClick={()=>{role==='user'?navigate('/profile/'):navigate('/worker/profile/')}}>Profile</h6>
         <h6 className={`p-2 sm:p-3 cursor-pointer ${window.location.pathname.includes(role==='user'?'/orders/':'services/accepted/')&&'bg-[#dcce9b65] font-semibold'}`} onClick={()=>{role==='user'?navigate('/orders/'):navigate('/worker/services/accepted/')}}>Your Orders</h6>
         <h6 className={`p-2 sm:p-3 cursor-pointer ${window.location.pathname.includes('wallet')&&'bg-[#dcce9b65] font-semibold'}`} onClick={()=>{role==='user'?navigate('/wallet/'):navigate('/worker/wallet/')}}>Wallet</h6>
-        <h6 className={`p-2 sm:p-3 cursor-pointer ${window.location.pathname.includes('chat')&&'bg-[#dcce9b65] font-semibold'}`}>Chat</h6>
     </div>
   )
 }

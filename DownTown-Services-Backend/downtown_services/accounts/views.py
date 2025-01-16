@@ -28,6 +28,7 @@ from django.contrib.auth.models import AnonymousUser
 from accounts.authenticate import customAuthentication
 
 from decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
 # Create your views here.
 
 
@@ -402,8 +403,11 @@ class ServiceRequests(APIView):
         worker_id = request.data.get('worker_id')
         service_id = request.data.get('service_id')
         description = request.data.get('description')
-        if request.user.user_profile.is_any_pending_payment:
-            return Response({'message':'Complete pending payment to make another request.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if request.user.user_profile.is_any_pending_payment:
+                return Response({'message':'Complete pending payment to make another request.'}, status=status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist:
+            return Response({'message':'Complete your profile.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             worker = CustomWorker.objects.get(id=worker_id)
             print(worker, 'worker')
