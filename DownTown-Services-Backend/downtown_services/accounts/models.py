@@ -6,7 +6,7 @@ import uuid
 # Create your models here.
 
 
-class CustomUserManager(BaseUserManager):
+class CustomUserManager(BaseUserManager):   
     def create_user(self, email=None, mob=None, password=None, **extra_fields):
         if not email and not mob:
             raise ValueError('Email or Mobile number is required')

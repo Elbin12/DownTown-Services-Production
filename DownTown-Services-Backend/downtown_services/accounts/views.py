@@ -13,9 +13,9 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .serializer import ProfileSerializer, UserGetSerializer,CategoriesAndSubCategories, CustomUserSerializer, UserOrderSerializer, RequestListingDetails, UserOrderTrackingSerializer, WalletSerializer, ChatMessageSerializer
 from admin_auth.models import Categories, SubCategories
 from worker.serializer import RequestsSerializer, ServiceListingSerializer, ServiceListingDetailSerializer, WorkerDetailSerializerForUser
-from worker.models import Services, CustomWorker, WorkerProfile, Requests
+from worker.models import Services, CustomWorker, WorkerProfile, Requests, Transaction as WorkerTransaction
 
-from .tasks import send_mail_task
+from .tasks import send_mail_task, send_notification
 from django.db.models import Q, Max
 from .utils import upload_fileobj_to_s3, create_presigned_url, AuthenticateIfJWTProvided, find_distance, find_distance_for_anonymoususer, get_nearby_services, get_nearby_services_for_anonymoususer, generate_otp
 
@@ -429,6 +429,8 @@ class ServiceRequests(APIView):
             service_request.description = description
             service_request.status = 'request_sent'
             service_request.save()
+            print('hii user')
+            send_notification(worker_profile.user.id, f'Service request from {service_request.user.user_profile.first_name}')
             serailizer = RequestsSerializer(service_request)
             return Response(serailizer.data, status=status.HTTP_201_CREATED)
         else:
@@ -620,8 +622,9 @@ class PaymentSuccess(APIView):
             request_obj.status = 'completed'
             request_obj.save()
             wallet = order.service_provider.wallet
+            print(wallet)
             amount = int(Decimal(order.service_price) - (Decimal(order.service_price) * Decimal(order.service_provider.worker_profile.worker_subscription.platform_fee_perc) / Decimal(100)))
-            wallet.add_balance(amount)
+            WorkerTransaction.objects.create(transaction_type='credit', wallet=wallet, amount = amount, status='completed')
             frontend_url = f"{FRONTEND_BASE_URL}/payment/success/{pk}/"
             return HttpResponseRedirect(frontend_url)
         except Orders.DoesNotExist:

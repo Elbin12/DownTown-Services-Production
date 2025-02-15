@@ -21,7 +21,8 @@ def get_custom_worker_model():
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user_id = self.scope['url_route']['kwargs']['user_id']
-        self.room_group_name = f"notification_{self.user_id}"
+        self.user_type = self.scope['user_type']
+        self.room_group_name = f"notification_{self.user_type}_{self.user_id}"
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -67,13 +68,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     def get_pending_notifications(self):
         """Retrieve pending notifications from Redis."""
-        notifications = cache.get(f"notifications_{self.user_id}", [])
+        notifications = cache.get(f"notifications_{self.user_type}_{self.user_id}", [])
         non_chat_notifications = [notification for notification in notifications if notification.get("type") != "chat"]
         return non_chat_notifications
     
     def get_pending_chat_notifications(self):
         """Retrieve pending notifications from Redis."""
-        notifications = cache.get(f"notifications_{self.user_id}", [])
+        notifications = cache.get(f"notifications_{self.user_type}_{self.user_id}", [])
         chat_notifications = [notification for notification in notifications if notification.get("type") == "chat"]
         for notification in chat_notifications:
             if notification.get("sender", {}).get("profile_pic"):
@@ -97,8 +98,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user_id = self.scope['url_route']['kwargs']['user_id']
         self.worker_id = self.scope['url_route']['kwargs']['worker_id']
 
-        self.notification_user_group_name = f"notification_{self.user_id}"
-        self.notification_worker_group_name = f"notification_{self.worker_id}"
+        self.notification_user_group_name = f"notification_user_{self.user_id}"
+        self.notification_worker_group_name = f"notification__worker_{self.worker_id}"
         self.room_group_name = f"chat_user_{self.user_id}_worker_{self.worker_id}"
 
         await self.channel_layer.group_add(
@@ -108,7 +109,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        notification_key = f"notifications_{self.user_id}" if self.role == 'user' else f"notifications_{self.worker_id}"
+        notification_key = f"notifications_user_{self.user_id}" if self.role == 'user' else f"notifications_worker_{self.worker_id}"
         if notification_key:
             notifications = cache.get(notification_key, [])
             non_chat_notifications = [
@@ -196,6 +197,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }
 
         await sync_to_async(self.store_notification_in_redis)(
+            recipient_type,
             recipient_id,
             notification_data
         )
@@ -213,7 +215,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         sender_chats = await sync_to_async(RecentChats)(sender_id, sender_type)
         await self.channel_layer.group_send(
-            f'notification_{sender_id}',
+            f'notification_{sender_type}_{sender_id}',
             {
                 'type': 'send_notification',
                 "notification": sender_chats,
@@ -223,7 +225,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         recipient_chats = await sync_to_async(RecentChats)(recipient_id, recipient_type)
         await self.channel_layer.group_send(
-            f'notification_{recipient_id}',
+            f'notification_{recipient_type}_{recipient_id}',
             {
                 'type': 'send_notification',
                 "notification": recipient_chats,
@@ -241,9 +243,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'timestamp': event['timestamp'],
         }))
 
-    def store_notification_in_redis(self, recipient_id, notification_data):
+    def store_notification_in_redis(self, recipient_type, recipient_id, notification_data):
         """Store notification in Redis with TTL."""
-        key = f"notifications_{recipient_id}"
+        key = f"notifications_{recipient_type}_{recipient_id}"
         notifications = cache.get(key, [])
         notifications.append(notification_data)
         cache.set(key, notifications, timeout=3600)

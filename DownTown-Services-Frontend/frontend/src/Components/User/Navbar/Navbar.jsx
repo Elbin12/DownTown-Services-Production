@@ -47,11 +47,12 @@ function Navbar() {
   })
 
   const DOMAIN = process.env.REACT_APP_DOMAIN
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
   console.log(DOMAIN, 'domainfnv', BASE_URL)
   
   useEffect(()=>{
-    const socket = new WebSocket(`wss://${DOMAIN}/ws/notification/${userinfo.id}/`);
+    const socket = new WebSocket(`${protocol}://${DOMAIN}/ws/notification/user/${userinfo.id}/`);
 
     console.log('ooooo')
     socket.onopen = function () {
@@ -85,13 +86,13 @@ function Navbar() {
       {activePopup=='login' && <Signin setActivePopup={setActivePopup} input={input} setInput={setInput}/>}
       {activePopup=='otp' && <OTP  setActivePopup={setActivePopup} input={input}/>}
       {activePopup=='location' && <Location role={'user'} location={location} setLocation={setLocation} setActivePopup={setActivePopup}/>}
-      <div className='flex justify-between w-full flex-column bg-white h-24 items-center px-2 sm:px-5 lg:px-20 fixed top-0 z-20'>
+      <div className='flex gap-4 justify-between w-full flex-column bg-white h-24 items-center px-2 sm:px-5 lg:px-20 fixed top-0 z-20'>
         <div className="logo w-[6rem] md:w-[9rem] lg:w-[11rem] cursor-pointer" onClick={()=>{navigate('/')}}>
           <img src={Logo} alt="" className='w-full h-full object-cover'/>
         </div>
         <Searchbar />
         {!userinfo&&
-          (<div className='login-button w-56 justify-center h-14 items-center flex bg-gradient-to-r from-[#3E6990CC] to-[#3E6990] rounded-lg text-white cursor-pointer' onClick={()=>{setActivePopup('login')}}>
+          (<div className='login-button text-[7px] w-20 h-8 sm:w-28 justify-center sm:h-11 lg:h-14 lg:w-52 lg:text-base items-center flex bg-gradient-to-r from-[#3E6990CC] to-[#3E6990] rounded-lg text-white cursor-pointer' onClick={()=>{setActivePopup('login')}}>
             <h4>Login or Create Account</h4>
           </div>)
         }

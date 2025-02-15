@@ -55,7 +55,7 @@ function Navbar({setChats}) {
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   
   useEffect(() => {
-    const socket = new WebSocket(`${protocol}://${DOMAIN}/ws/notification/${workerinfo.id}/`);
+    const socket = new WebSocket(`${protocol}://${DOMAIN}/ws/notification/worker/${workerinfo.id}/`);
 
     socket.onopen = () => {
       console.log("WebSocket connection opened");

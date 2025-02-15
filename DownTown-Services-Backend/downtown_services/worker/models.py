@@ -184,7 +184,7 @@ class Requests(models.Model):
 
 class Wallet(models.Model):
     wallet_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    worker = models.ForeignKey(CustomWorker, on_delete=models.CASCADE, related_name='wallet')
+    worker = models.OneToOneField(CustomWorker, on_delete=models.CASCADE, related_name='wallet')
     balance = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
