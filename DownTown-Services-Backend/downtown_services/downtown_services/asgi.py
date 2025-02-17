@@ -21,4 +21,4 @@ from websocket.middlewares import JWTAuthMiddleware
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),
     'websocket': JWTAuthMiddleware(URLRouter(routing.websocket_urlpatterns)),
-})  
+})

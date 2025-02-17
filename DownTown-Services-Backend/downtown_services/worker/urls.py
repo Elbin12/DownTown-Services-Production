@@ -45,4 +45,5 @@ urlpatterns = [
     path('capture_payment/', views.CapturePayment.as_view()),
     path('dashboard/', views.Dashboard.as_view()),
     path("categories/", views.GetCategories.as_view()),
+    path("forgot-password/", views.ForgotPassword.as_view()),
 ]

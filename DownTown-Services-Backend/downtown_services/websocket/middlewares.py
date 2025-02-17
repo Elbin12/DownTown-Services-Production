@@ -18,14 +18,14 @@ class JWTAuthMiddleware(BaseMiddleware):
         headers = dict(scope.get("headers", []))
         cookies = self.get_cookies(headers)
 
-        access_token, refresh_token, access_key, refresh_key, user_type = self.get_tokens(cookies, scope)
+        access_token, refresh_token, access_key, refresh_key, user_type, user_id, worker_id = self.get_tokens(cookies, scope)
 
         scope["user_type"] = user_type
 
         if not access_token:
             raise DenyConnection("Authentication failed: No token provided.")
 
-        user = await self.get_user(access_token, refresh_token, refresh_key, user_type)
+        user = await self.get_user(access_token, refresh_token, refresh_key, user_type, user_id, worker_id)
         
         if user is None:
             raise DenyConnection("Authentication failed: Invalid token.")
@@ -51,8 +51,18 @@ class JWTAuthMiddleware(BaseMiddleware):
         """
         Retrieve access and refresh tokens from cookies based on the request path.
         """
-        match = re.match(r"^/ws/(?P<service>chat|notification)/(?P<role>\w+)/", scope["path"])
-        role = match.group("role") if match else "user"
+        match = re.match(r"^/ws/(?P<service>chat|notification)/(?P<role>\w+)/(?P<user_id>\w+)/(?P<worker_id>\w+)/?$", scope["path"])
+
+        if match:
+            user_id = match.group("user_id")
+            worker_id = match.group("worker_id")
+            role = match.group("role")
+        else:
+            match = re.match(r"^/ws/(?P<service>chat|notification)/(?P<role>\w+)/(?P<user_id>\w+)/?$", scope["path"])
+            user_id = match.group("user_id")
+            worker_id = None
+            role = match.group("role")
+
         if role == 'worker':
             access = "worker_access_token"
             refresh = "worker_refresh_token"
@@ -62,10 +72,10 @@ class JWTAuthMiddleware(BaseMiddleware):
             refresh = "refresh_token"
             user_type = "user"
 
-        return cookies.get(access), cookies.get(refresh), access, refresh, user_type
+        return cookies.get(access), cookies.get(refresh), access, refresh, user_type, user_id, worker_id
 
     @database_sync_to_async
-    def get_user(self, access_token, refresh_token, refresh_key, user_type):
+    def get_user(self, access_token, refresh_token, refresh_key, user_type,user_id, worker_id):
         """
         Decode JWT token and fetch the user.
         """
@@ -73,6 +83,12 @@ class JWTAuthMiddleware(BaseMiddleware):
         from worker.models import CustomWorker
         try:
             validated_token = JWTAuthentication().get_validated_token(access_token)
+            if user_type == 'user':
+                if user_id != validated_token["user_id"]:
+                    return DenyConnection("You donot have permission to access.")
+                if user_type == 'worker':
+                    if worker_id != validated_token["user_id"]:
+                        return DenyConnection("You donot have permission to access.")
             user_id = validated_token["user_id"] if user_type == "user" else validated_token["worker_id"]
 
             if user_type == "user":

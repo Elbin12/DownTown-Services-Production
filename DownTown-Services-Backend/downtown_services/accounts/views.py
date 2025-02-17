@@ -767,6 +767,8 @@ class ChatHistoryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, user_id, worker_id, page_no):
+        if user_id != request.user.id:
+            return Response({'message':'You donot have permission to access this.'}, status=400)
         ids = sorted([user_id, worker_id])
         no = page_no*20
         messages = ChatMessage.objects.filter(

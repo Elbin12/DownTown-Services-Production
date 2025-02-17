@@ -99,7 +99,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.worker_id = self.scope['url_route']['kwargs']['worker_id']
 
         self.notification_user_group_name = f"notification_user_{self.user_id}"
-        self.notification_worker_group_name = f"notification__worker_{self.worker_id}"
+        self.notification_worker_group_name = f"notification_worker_{self.worker_id}"
         self.room_group_name = f"chat_user_{self.user_id}_worker_{self.worker_id}"
 
         await self.channel_layer.group_add(

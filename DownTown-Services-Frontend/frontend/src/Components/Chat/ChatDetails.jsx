@@ -6,7 +6,7 @@ import { IoCall } from "react-icons/io5";
 
 
 
-function ChatDetails({  role,  setIsChatOpen, user, setSelectedChatId={setSelectedChatId} }) {
+function ChatDetails({  role,  setIsChatOpen, user, setSelectedChatId }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const userinfo = useSelector((state) => state.user.userinfo);
@@ -15,7 +15,7 @@ function ChatDetails({  role,  setIsChatOpen, user, setSelectedChatId={setSelect
   const [loadingOlderMessages, setLoadingOlderMessages] = useState(false); // To prevent duplicate fetches
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
-  console.log(userinfo, 'usserrrinfo')
+  console.log(user, workerinfo, 'usserrrinfo')
 
   const sender_id = role === "user" ? userinfo?.id || "" : workerinfo?.id || "";
 
@@ -46,8 +46,11 @@ function ChatDetails({  role,  setIsChatOpen, user, setSelectedChatId={setSelect
   }, [messages]);
 
   useEffect(() => {
+    setMessages([])
+    setPage(1);
+    setHasMoreMessages(true);
     fetchMessages(); 
-  }, []);
+  }, [user]);
   
   useEffect(() => {
     if (page>1){

@@ -18,7 +18,7 @@ function Layout({children}) {
 
     const location = useLocation();
 
-    const excludePaths = ["/worker/login/", "/worker/signup/", "/worker/login", "/worker/signup"];
+    const excludePaths = ["/worker/login/", "/worker/signup/", "/worker/login", "/worker/signup", "/worker/forgot-password/"];
 
     const shouldShowLayout = !excludePaths.includes(location.pathname);
 
@@ -51,7 +51,7 @@ function Layout({children}) {
         <>
             <Chat chats={chats} role='worker' setIsChatOpen={setIsChatOpen} setWorker={setWorker} selectedChatId={selectedChatId} setSelectedChatId={setSelectedChatId}/>
             {isChatOpen&&
-                <ChatDetails setChats={setChats} role='worker' setIsChatOpen={setIsChatOpen} user={worker} setSelectedChatId={setSelectedChatId}  />
+                <ChatDetails setChats={setChats} role='worker' setIsChatOpen={setIsChatOpen} user={worker} selectedChatId={selectedChatId}  setSelectedChatId={setSelectedChatId}  />
             }</>
     }
     {shouldShowLayout && 

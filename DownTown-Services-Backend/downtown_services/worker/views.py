@@ -30,6 +30,7 @@ from django.db.models import Q, OuterRef, Subquery, Avg, Sum, Count
 from .utils import update_subscription_plan, cancel_subscription
 from django.utils import timezone
 from django.db.models.functions import TruncDate
+from django.contrib.auth.hashers import make_password   
 # Create your views here.
 
 
@@ -905,3 +906,23 @@ class GetCategories(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+class ForgotPassword(APIView):
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        print('kfkfk')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        confirmPassword = request.data.get('confirmPassword')
+
+        if not password or not confirmPassword or confirmPassword != password:
+            return Response({'error':'Passwords should be equal.'}, status=400)
+        
+        try:
+            worker = CustomWorker.objects.get(email=email)
+            worker.password = make_password(password)
+            worker.save()
+            return Response({'success':'Password changed.'}, status=200)
+        except CustomWorker.DoesNotExist:
+            return Response({'error':'Worker accound doesnot exist  on this email.'}, status=400)
