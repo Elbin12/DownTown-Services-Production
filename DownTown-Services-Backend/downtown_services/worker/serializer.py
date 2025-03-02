@@ -8,6 +8,7 @@ from accounts.utils import upload_fileobj_to_s3, create_presigned_url
 from admin_auth.models import Categories, Subscription
 from accounts.models import Review, Orders, ChatMessage, CustomUser
 from django.db.models import Avg
+from django.contrib.auth.models import AnonymousUser
 
 class WorkerRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
@@ -240,9 +241,10 @@ class WorkerDetailSerializer(serializers.ModelSerializer):
         return data
     
     def get_profile_pic(self, obj):
-        image_url = create_presigned_url(str(obj.worker_profile.profile_pic))
-        if image_url:
-            return image_url
+        if obj.worker_profile.profile_pic:
+            image_url = create_presigned_url(str(obj.worker_profile.profile_pic))
+            if image_url:
+                return image_url
         return None
     
     def get_subscription(self, obj):
@@ -285,7 +287,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Services
         fields = ['workerProfile', 'id', 'worker', 'service_name', 'description','category', 'subcategory', 'category_name', 'subcategory_name', 'pic', 'price', 'is_active', 'status', 'is_listed' ]
-        read_only_fields = ['worker']
+        read_only_fields = ['worker', 'is_listed']
     
     def validate(self, attrs):
         service_name = attrs.get('service_name')
@@ -359,8 +361,11 @@ class ServiceListingDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['worker']
 
     def get_request(self, obj):
-        user = self.context.get('request').user
-        print(user)
+        request = self.context.get('request')
+        if not request or isinstance(request.user, AnonymousUser):
+            return False
+        user = request.user
+        print(user, 'lldlld')
         if user.is_authenticated:
             service_request = Requests.objects.filter(user=user, service=obj).first()
             if service_request:

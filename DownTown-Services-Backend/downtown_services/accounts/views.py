@@ -13,7 +13,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .serializer import ProfileSerializer, UserGetSerializer,CategoriesAndSubCategories, CustomUserSerializer, UserOrderSerializer, RequestListingDetails, UserOrderTrackingSerializer, WalletSerializer, ChatMessageSerializer
 from admin_auth.models import Categories, SubCategories
 from worker.serializer import RequestsSerializer, ServiceListingSerializer, ServiceListingDetailSerializer, WorkerDetailSerializerForUser
-from worker.models import Services, CustomWorker, WorkerProfile, Requests, Transaction as WorkerTransaction
+from worker.models import Services, CustomWorker, WorkerProfile, Requests, Transaction as WorkerTransaction, Wallet as WorkerWallet
 
 from .tasks import send_mail_task, send_notification
 from django.db.models import Q, Max
@@ -376,18 +376,19 @@ class ServiceDetail(APIView):
 
     def get(self, request, pk):
         try:
-            print(pk, 'pk')
+            print(pk, 'pk', request.user)
             service = Services.objects.get(id=pk)
             if isinstance(request.user, AnonymousUser):
                 lat = request.session.get('lat')
                 lng = request.session.get('lng')
                 if find_distance_for_anonymoususer(lat, lng, service.worker.worker_profile) > 10:
+                    print("woerrrrking")
                     return Response({'error':'Service is not available in your city'}, status=status.HTTP_400_BAD_REQUEST)
             elif isinstance(request.user, CustomUser):
                 if find_distance(request.user, service.worker.worker_profile) > 10:
                     return Response({'error':'Service is not available in your city'}, status=status.HTTP_400_BAD_REQUEST)
             serializer = ServiceListingDetailSerializer(service, context={'request': request})
-            print(serializer.data, 'data')
+            print('workingggg')
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Services.DoesNotExist:
             return Response({'message':'Service does not exist'}, status=status.HTTP_404_NOT_FOUND)
@@ -639,23 +640,25 @@ class WalletPayment(APIView):
         try:
             order_id = request.data.get('order_id')
             order = Orders.objects.get(id=order_id)
-            order.order_payment.status = 'paid'
-            order.order_payment.save()
-            order.save()
 
             user_profile = order.user.user_profile
             user_profile.is_any_pending_payment = False
             user_profile.save()
             user_wallet = order.user.wallet
+            user_wallet, created = Wallet.objects.get_or_create(user=order.user)
             user_wallet.deduct_balance(order.service_price)
+
+            worker_wallet, created = WorkerWallet.objects.get_or_create(user=order.service_provider)
+            amount = int(Decimal(order.service_price) - (Decimal(order.service_price) * Decimal(order.service_provider.worker_profile.worker_subscription.platform_fee_perc) / Decimal(100)))
+            worker_wallet.add_balance(amount)
+
+            order.order_payment.status = 'paid'
+            order.order_payment.save()
+            order.save()
 
             request_obj = order.request
             request_obj.status = 'completed'
             request_obj.save()
-
-            wallet = order.service_provider.wallet
-            amount = int(Decimal(order.service_price) - (Decimal(order.service_price) * Decimal(order.service_provider.worker_profile.worker_subscription.platform_fee_perc) / Decimal(100)))
-            wallet.add_balance(amount)
             return Response(status=status.HTTP_200_OK)
         except Orders.DoesNotExist:
             return Response({'error':'order not found'}, status=status.HTTP_400_BAD_REQUEST)
@@ -673,7 +676,7 @@ class AddReview(APIView):
             order = Orders.objects.get(id=order_id)
             review = Review.objects.create(order=order, review=review, rating=int(rating))
             Interactions.objects.create(user=request.user, review = review)
-            serializer = UserOrderSerializer(order)
+            serializer = UserOrderSerializer(order, context={'request':request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Orders.DoesNotExist:
             return Response({'error':'Order not found'}, status=status.HTTP_400_BAD_REQUEST)
@@ -774,6 +777,8 @@ class ChatHistoryView(APIView):
         messages = ChatMessage.objects.filter(
             sender_id__in=ids,
             recipient_id__in=ids
+        ).filter(
+            Q(sender_id=user_id, recipient_id=worker_id) | Q(sender_id=worker_id, recipient_id=user_id)
         ).order_by('-timestamp')[(page_no-1)*20:no]
         messages = messages[::-1]
         serializer = ChatMessageSerializer(messages, many=True, context={'request':request})
@@ -785,17 +790,18 @@ class Chats(APIView):
     def get(self, request):
         user = request.user
 
-        # Subquery to find the last message for each conversation involving the user
         last_message_subquery = ChatMessage.objects.filter(
             Q(sender_id=OuterRef('sender_id'), recipient_id=OuterRef('recipient_id')) |
             Q(sender_id=OuterRef('recipient_id'), recipient_id=OuterRef('sender_id'))
         ).filter(
-            Q(sender_id=user.id) | Q(recipient_id=user.id)  # Restrict to user's conversations
+            (Q(sender_id=user.id) & Q(sender_type='user')) |  
+            (Q(recipient_id=user.id) & Q(recipient_type='user'))  # Ensure it's the correct user
         ).order_by('-timestamp').values('id')[:1]
 
-        # Fetch the latest messages in user's conversations
+        # Fetch the latest messages in the user's conversations
         last_messages = ChatMessage.objects.filter(
-            Q(sender_id=user.id) | Q(recipient_id=user.id),  # Include only user's messages
+            ((Q(sender_id=user.id) & Q(sender_type='user')) |  
+             (Q(recipient_id=user.id) & Q(recipient_type='user'))),  # Ensure sender/recipient is the user
             id__in=Subquery(last_message_subquery)
         ).distinct().order_by('-timestamp')
 

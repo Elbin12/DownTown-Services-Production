@@ -31,6 +31,8 @@ from .utils import update_subscription_plan, cancel_subscription
 from django.utils import timezone
 from django.db.models.functions import TruncDate
 from django.contrib.auth.hashers import make_password   
+
+from accounts.views import send_email
 # Create your views here.
 
 
@@ -368,7 +370,7 @@ class ChangeLocation(APIView):
         lng = request.data.get('lng')
         location = request.data.get('location')
         try:
-            user_profile = WorkerProfile.objects.get(user=request.user)
+            user_profile, created = WorkerProfile.objects.get_or_create(user=request.user)
             user_profile.lat = lat
             user_profile.lng = lng
             user_profile.location = location
@@ -525,6 +527,8 @@ class ChatHistoryView(APIView):
         messages = ChatMessage.objects.filter(
             sender_id__in=ids,
             recipient_id__in=ids
+        ).filter(
+            Q(sender_id=user_id, recipient_id=worker_id) | Q(sender_id=worker_id, recipient_id=user_id)
         ).order_by('-timestamp')[(page_no-1)*20:no]
         messages = messages[::-1]                                                                                                                                                                                                                  
         serializer = ChatMessageSerializer(messages, many=True, context={'request':request})
@@ -541,12 +545,14 @@ class Chats(APIView):
             Q(sender_id=OuterRef('sender_id'), recipient_id=OuterRef('recipient_id')) |
             Q(sender_id=OuterRef('recipient_id'), recipient_id=OuterRef('sender_id'))
         ).filter(
-            Q(sender_id=user.id) | Q(recipient_id=user.id)  # Restrict to user's conversations
+            (Q(sender_id=user.id) & Q(sender_type='worker')) |  
+            (Q(recipient_id=user.id) & Q(recipient_type='worker'))  # Ensure it's the correct user
         ).order_by('-timestamp').values('id')[:1]
 
         # Fetch the latest messages in user's conversations
         last_messages = ChatMessage.objects.filter(
-            Q(sender_id=user.id) | Q(recipient_id=user.id),  # Include only user's messages
+            ((Q(sender_id=user.id) & Q(sender_type='worker')) |  
+             (Q(recipient_id=user.id) & Q(recipient_type='worker'))),  # Ensure sender/recipient is the user
             id__in=Subquery(last_message_subquery)
         ).distinct().order_by('-timestamp')
 
@@ -874,8 +880,8 @@ class SubscriptionUpgrade(APIView):
                 return Response({"status": "failed", "error": "Invalid subscription plan ID."}, status=status.HTTP_404_NOT_FOUND)
             
             worker_profile = request.user.worker_profile
-            update_subscription_plan(worker_profile, subscription_plan)
-            return Response({'message':'Subscription upgraded successfully.', 'worker_info':WorkerDetailSerializer(request.user).data}, status=status.HTTP_200_OK)
+            response = update_subscription_plan(worker_profile, subscription_plan)
+            return response
 
         except stripe.error.StripeError as e:
             return Response({"status": "failed", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -919,10 +925,48 @@ class ForgotPassword(APIView):
         if not password or not confirmPassword or confirmPassword != password:
             return Response({'error':'Passwords should be equal.'}, status=400)
         
+        if not request.session.get('otp_verified'):
+            return Response({'error': 'OTP verification required before changing password'}, status=400)
+        
         try:
             worker = CustomWorker.objects.get(email=email)
             worker.password = make_password(password)
             worker.save()
+            del request.session['otp_verified']
             return Response({'success':'Password changed.'}, status=200)
         except CustomWorker.DoesNotExist:
             return Response({'error':'Worker accound doesnot exist  on this email.'}, status=400)
+        
+
+class SentOTP(APIView):
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+
+        if not email:
+            return Response({'error':'Please enter an email'}, status=400)
+        try:
+            worker = CustomWorker.objects.get(email=email)
+            send_email(request, email)
+            return Response({'success':'success'}, status=200)
+        except CustomWorker.DoesNotExist:
+            return Response({'error':'Worker accound doesnot exist  on this email.'}, status=400)
+        
+class VerifyOTP(APIView):
+    permission_classes = [permissions.AllowAny]
+    def post(self, request):
+        print('vannu')
+        otp = request.data['otp']
+        session_otp = request.session.get('otp')
+        if session_otp is not None:
+            request.session['otp_verified'] = True
+            print(session_otp, otp)
+            if str(session_otp) == otp:
+                del request.session['otp']
+                return Response({'success':'success'}, status=200)
+            else:
+                return Response({'message':'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'message': 'OTP not found or expired'}, status=status.HTTP_400_BAD_REQUEST)

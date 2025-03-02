@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime
 from django.utils.timezone import make_aware, now
+from .serializer import WorkerDetailSerializer
 
 
 # Subscription management
@@ -69,7 +70,7 @@ def update_subscription_plan(worker_profile, new_plan):
         subscription = stripe.Subscription.retrieve(worker_subscription.stripe_subscription_id)
 
         if not subscription.get('items') or len(subscription['items']['data']) == 0:
-            return {"success": False, "message": "No subscription items found."}
+            return Response({"success": False, "message": "No subscription items found."}, status=400)
         
         subscription_item_id = subscription['items']['data'][0].id  
 
@@ -86,7 +87,7 @@ def update_subscription_plan(worker_profile, new_plan):
         )
 
         if not subscription:
-            return {"success": False, "message": "Subscription update failed. No subscription returned."}
+            return Response({"success": False, "message": "Subscription update failed. No subscription returned."},status=400)
         
         payment_intent = subscription.latest_invoice.payment_intent
         if payment_intent.status != "succeeded":
@@ -110,7 +111,7 @@ def update_subscription_plan(worker_profile, new_plan):
         worker_subscription.invoice_id = subscription.latest_invoice.id
 
         worker_subscription.save()
-
-        return subscription
+        return Response({'message':'Subscription upgraded successfully.', 'worker_info':WorkerDetailSerializer(worker_profile.user).data}, status=200)
     except stripe.error.StripeError as e:
-        return {"success": False, "message": str(e)}
+        print(e, 'kk')
+        return Response({"success": False, "message": 'something went wrong.'}, status=400)

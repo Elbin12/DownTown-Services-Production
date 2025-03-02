@@ -10,9 +10,11 @@ function WorkerProtectedRoute({children}) {
 
     useEffect(()=>{
         if(!workerinfo?.isWorker){
+            console.log('not logined')
             navigate('/')
         }
-    })
+        console.log(workerinfo, 'workermdnd ')
+    },[])
 
   return children
 }

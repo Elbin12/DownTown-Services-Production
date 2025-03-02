@@ -18,12 +18,14 @@ def RecentChats(sender_id, sender_type):
         Q(sender_id=OuterRef('sender_id'), recipient_id=OuterRef('recipient_id')) |
         Q(sender_id=OuterRef('recipient_id'), recipient_id=OuterRef('sender_id'))
     ).filter(
-        Q(sender_id=sender_id) | Q(recipient_id=sender_id)  # Restrict to user's conversations
+        (Q(sender_id=sender_id) & Q(sender_type=sender_type)) |
+        (Q(recipient_id=sender_id) & Q(recipient_type=sender_type))  # Ensure the correct user/worker
     ).order_by('-timestamp').values('id')[:1]
 
     # Main query to fetch the latest messages in user's conversations
     last_messages = ChatMessage.objects.filter(
-        Q(sender_id=sender_id) | Q(recipient_id=sender_id),  # Include only user's messages
+        ((Q(sender_id=sender_id) & Q(sender_type=sender_type)) |  
+         (Q(recipient_id=sender_id) & Q(recipient_type=sender_type))),  # Ensure sender/recipient is correct
         id__in=Subquery(last_message_subquery)
     ).order_by('-timestamp')
 

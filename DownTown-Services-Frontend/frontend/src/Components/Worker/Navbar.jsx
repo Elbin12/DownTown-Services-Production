@@ -14,7 +14,7 @@ import { MdOutlineArrowDropDown } from 'react-icons/md';
 import Location from '../User/Location';
 import { useLoadScript } from "@react-google-maps/api";
 import { BiSolidMessageDetail } from "react-icons/bi";
-
+import { TiSpannerOutline } from "react-icons/ti";
 
 
 
@@ -133,7 +133,14 @@ function Navbar({setChats}) {
                     <p className='text-xs'>Manage your profile, login details and password</p>
                   </div>
                 </div>
-                <div className='flex gap-4 hover:bg-blue-50 p-3'>
+                <div className='flex gap-4 hover:bg-blue-50 p-3' onClick={()=>{navigate('/worker/services/accepted/')}}>
+                  <TiSpannerOutline className='text-2xl'/>
+                  <div>
+                    <h4 className='font-semibold text-sm'>Your Orders</h4>
+                    <p className='text-xs'>Manage all your past services.</p>
+                  </div>
+                </div>
+                <div className='flex gap-4 hover:bg-blue-50 p-3' onClick={()=>{navigate('/worker/wallet/')}}>
                   <CiWallet className='text-2xl'/>
                   <div>
                     <h4 className='font-semibold text-sm'>My Wallet</h4>

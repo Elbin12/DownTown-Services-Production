@@ -85,7 +85,7 @@ function Profile({role}) {
 
   const [categories, setCategories] = useState([]);
   const [showCategories, setShowCategories] = useState(false);
-  const [selectedServices, setSelectedServices] = useState(workerinfo?.services);
+  const [selectedServices, setSelectedServices] = useState(role==='worker'&&workerinfo?.services);
 
   const [mobErr, setMobErr] = useState('');
   const [first_name_err, setFirst_name_Error] = useState('');
@@ -403,7 +403,7 @@ function Profile({role}) {
       </div>
     </div>
 
-    {role==='worker' && 
+    {/* {role==='worker' && 
       <div className="bg-white mx-auto sm:mx-[5rem] lg:mx-[15rem] xl:mx-[15rem] my-2 sm:rounded-lg shadow-md p-6 sm:p-8">
         <div className='flex w-full justify-between items-center mb-6'>
           <h2 className="text-2xl font-semibold text-gray-800">Your Services</h2>
@@ -411,7 +411,7 @@ function Profile({role}) {
         </div>
         
         <div className="space-x-4 flex">
-          {selectedServices.map(service => (
+          {selectedServices?.map(service => (
             <div key={service.id} className="flex w-1/6 items-center justify-center  bg-gray-200 py-3 rounded-md">
               <h1 className="text-lg font-medium text-gray-700">{service.name}</h1>
             </div>
@@ -440,13 +440,13 @@ function Profile({role}) {
           </div>
         )}
         
-        {workerinfo.services.length === 0 && (
+        {workerinfo?.services?.length === 0 && (
           <div className="text-center text-gray-500 mt-8">
             No services available. Please contact support to add services.
           </div>
         )}
       </div>
-    }
+    } */}
 
     {workerinfo && role ==='worker' && workerinfo?.subscription&&
       <div className="bg-white    mx-auto sm:mx-[5rem] lg:mx-[15rem] xl:mx-[15rem] my-2 sm:rounded-lg shadow-md p-6 sm:p-8 relative">

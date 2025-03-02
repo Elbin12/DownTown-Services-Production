@@ -36,13 +36,13 @@ export default function PaymentMethodPopup({setIsLoading, id, stripePromise, set
         }
     }else if (selectedMethod.id === 'wallet'){
       try{
-        const res = api.post('wallet_payment/', {'order_id':id})
+        const res = await api.post('wallet_payment/', {'order_id':id})
         if (res.status === 200){
           toast.success('Payment successfull')
           window.location.reload();
         }
       }catch (err){
-        console.log('err', err)
+        toast.error(err.response.data.error)
       }
     }
   }

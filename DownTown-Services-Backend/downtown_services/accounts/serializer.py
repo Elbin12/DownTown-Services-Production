@@ -154,7 +154,7 @@ class UserOrderSerializer(serializers.ModelSerializer):
     worker = serializers.SerializerMethodField(read_only = True)
     service_image = serializers.SerializerMethodField()
     payment_details = serializers.SerializerMethodField()
-    user_review = ReviewSerializer(source='review', many=True, read_only=True)
+    user_review = serializers.SerializerMethodField()
     class Meta:
         model = Orders
         fields = ['id', 'user', 'worker', 'order_tracking', 'service_name', 'service_description', 'service_price', 'status', 'service_image', 'user_description', 'created_at', 'payment_details', 'user_review', 'otp']
@@ -179,6 +179,9 @@ class UserOrderSerializer(serializers.ModelSerializer):
                 payment_data['additional_charges'] = additional_charges_data
             return payment_data
         return None
+    
+    def get_user_review(self, obj):
+        return ReviewSerializer(obj.review, context=self.context, many=True, read_only=True).data
     
 class RequestListingDetails(serializers.ModelSerializer):
     worker = serializers.SerializerMethodField()

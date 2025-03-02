@@ -47,6 +47,8 @@ function AddServices() {
         if(workerinfo?.subscription){
             if(workerinfo?.subscription?.subscription_status === 'active'){
                 return true
+            }else if(new Date() < new Date(workerinfo?.subscription?.subscription_end_date)){
+                return true
             }
             return false
         }

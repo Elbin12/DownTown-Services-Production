@@ -46,4 +46,6 @@ urlpatterns = [
     path('dashboard/', views.Dashboard.as_view()),
     path("categories/", views.GetCategories.as_view()),
     path("forgot-password/", views.ForgotPassword.as_view()),
+    path("sent-otp/", views.SentOTP.as_view()),
+    path("verify-otp/", views.VerifyOTP.as_view()),
 ]

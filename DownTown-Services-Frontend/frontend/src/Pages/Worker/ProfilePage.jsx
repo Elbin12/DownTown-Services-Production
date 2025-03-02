@@ -6,7 +6,6 @@ import SecondNavbar from '../../Components/User/SecondNavbar/SecondNavbar'
 function ProfilePage() {
   return (
     <>
-        <SecondNavbar role='worker'/>
         <Profile role='worker'/>
     </>
   )

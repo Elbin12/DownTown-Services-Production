@@ -45,6 +45,7 @@ function CreditPayment({role}) {
               dispatch(setWorkerinfo(response.data.worker_info))
             }
           } else {
+            console.log(response.data)
             throw new Error(response.data.error || "Subscription setup failed");
           }
       }else{
