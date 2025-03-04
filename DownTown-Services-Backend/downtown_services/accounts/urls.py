@@ -21,6 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+   path('home/', views.Home.as_view()),
    path('signin/', views.SignIn.as_view()),
    path('signin-with-google/',views.SignInWithGoogle.as_view()),
    path('sent-otp/', views.SentOTP.as_view()),

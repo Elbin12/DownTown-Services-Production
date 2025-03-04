@@ -73,6 +73,7 @@ class UserProfile(models.Model):
 class Orders(models.Model):
     user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='orders')
     service_provider = models.ForeignKey('worker.CustomWorker', on_delete=models.CASCADE, related_name='serviced_orders')
+    service = models.ForeignKey('worker.Services', on_delete=models.CASCADE, related_name='service')
     request = models.ForeignKey('worker.Requests', on_delete=models.CASCADE, related_name='service_request')
 
     service_name = models.CharField(max_length=255)

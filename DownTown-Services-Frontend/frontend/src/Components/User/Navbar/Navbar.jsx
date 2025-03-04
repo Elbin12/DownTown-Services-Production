@@ -86,7 +86,7 @@ function Navbar() {
       {activePopup=='login' && <Signin setActivePopup={setActivePopup} input={input} setInput={setInput}/>}
       {activePopup=='otp' && <OTP  setActivePopup={setActivePopup} input={input}/>}
       {activePopup=='location' && <Location role={'user'} location={location} setLocation={setLocation} setActivePopup={setActivePopup}/>}
-      <div className='flex gap-4 justify-between w-full flex-column bg-white h-24 items-center px-2 sm:px-5 lg:px-20 fixed top-0 z-20'>
+      <div className='flex shadow-lg gap-4 justify-between w-full flex-column bg-white h-24 items-center px-2 sm:px-5 lg:px-20 fixed top-0 z-20'>
         <div className="logo w-[6rem] md:w-[9rem] lg:w-[11rem] cursor-pointer" onClick={()=>{navigate('/')}}>
           <img src={Logo} alt="" className='w-full h-full object-cover'/>
         </div>

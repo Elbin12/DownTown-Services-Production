@@ -337,15 +337,17 @@ class WorkerRequests(APIView):
                     usage = request.user.worker_profile.worker_subscription
                     if usage.can_handle_request():
                         send_notification.delay(
+                            type='user',
                             user_id=request_obj.user.id,
                             message=f"Your request has been accepted by {request_obj.worker.first_name}!"
                         )
                         otp = generate_otp()
                         send_notification.delay(
+                            type='user',
                             user_id=request_obj.user.id,
                             message=f"{otp} Show this otp to worker when the worker {request_obj.worker.first_name} arrives"
                         )
-                        order = Orders.objects.create(user=request_obj.user, service_provider=request_obj.worker.user, request=request_obj, service_name = request_obj.service.service_name, service_description=request_obj.service.description, service_price=request_obj.service.price, service_image_url=request_obj.service.pic, user_description=request_obj.description, otp=otp)
+                        order = Orders.objects.create(user=request_obj.user, service=request_obj.service, service_provider=request_obj.worker.user, request=request_obj, service_name = request_obj.service.service_name, service_description=request_obj.service.description, service_price=request_obj.service.price, service_image_url=request_obj.service.pic, user_description=request_obj.description, otp=otp)
                         OrderTracking.objects.create(order=order)
                         usage.increment_user_requests_handled()
                         usage.save()
@@ -353,6 +355,7 @@ class WorkerRequests(APIView):
                         return Response({'failure':'User request limit reached for the subscription tier.'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     send_notification.delay(
+                        type='user',
                         user_id=request_obj.user.id,
                         message=f"Your request has been rejected by {request_obj.worker.first_name}!"
                     )

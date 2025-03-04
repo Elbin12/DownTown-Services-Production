@@ -22,7 +22,7 @@ function UserRoutes() {
                         <Route path='/profile/' element={<UserProtectedRoute><Profilepage /></UserProtectedRoute>}></Route>
                         <Route path='/' element={<Homepage />}></Route>
                         <Route path='/services/' element={<ServicesListingPage />}></Route>
-                        <Route path='/service/:id/' element={<UserProtectedRoute><ServiceDetailsPage /></UserProtectedRoute>}></Route>
+                        <Route path='/service/:id/' element={<ServiceDetailsPage />}></Route>
                         <Route path='/orders/' element={<UserProtectedRoute><Orderspage /></UserProtectedRoute>}></Route>
                         <Route path='/order/:id/' element={<UserProtectedRoute><AcceptedServicePage /></UserProtectedRoute>}></Route>
                         <Route path='/payment/success/:id/' element={<UserProtectedRoute><PaymentSuccessPage /></UserProtectedRoute>}></Route>

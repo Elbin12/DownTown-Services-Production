@@ -59,10 +59,11 @@ function ServiceDetail({setIsChatOpen, setRecipient_id, setWorker}) {
 
     useEffect(()=>{
       setTimeout(() => {
-        const fetchServiceDetails = async()=>{
+        const fetchServiceDetails = async ()=>{
             try{
               const res = await api.get(`service/${id}/`)
               if(res.status === 200){
+                console.log(res.data, 'from service detailsss')
                 setService(res.data)
                 setDescription(()=>{
                   if (res.data.request?.status !== 'rejected' && res.data.request?.status !== 'completed' && res.data.request?.status !== 'cancelled'){

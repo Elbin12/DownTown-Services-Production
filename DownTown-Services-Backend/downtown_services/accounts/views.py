@@ -309,7 +309,7 @@ class GetCategories(APIView):
     authentication_classes = []
 
     def get(self, request):
-        category = Categories.objects.annotate(sub_category_count=Count('subcategories')).filter(sub_category_count__gt=0)
+        category = Categories.objects.annotate(sub_category_count=Count('subcategories')).filter(sub_category_count__gt=0).order_by('category_name')
         serializer = CategoriesAndSubCategories(category, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -387,7 +387,7 @@ class ServiceDetail(APIView):
             elif isinstance(request.user, CustomUser):
                 if find_distance(request.user, service.worker.worker_profile) > 10:
                     return Response({'error':'Service is not available in your city'}, status=status.HTTP_400_BAD_REQUEST)
-            serializer = ServiceListingDetailSerializer(service, context={'request': request})
+            serializer = ServiceListingDetailSerializer(service, context={'request': request if request.user.is_authenticated else None})
             print('workingggg')
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Services.DoesNotExist:
@@ -431,7 +431,7 @@ class ServiceRequests(APIView):
             service_request.status = 'request_sent'
             service_request.save()
             print('hii user')
-            send_notification(worker_profile.user.id, f'Service request from {service_request.user.user_profile.first_name}')
+            send_notification('worker', worker_profile.user.id, f'Service request from {service_request.user.user_profile.first_name}')
             serailizer = RequestsSerializer(service_request)
             return Response(serailizer.data, status=status.HTTP_201_CREATED)
         else:
@@ -807,3 +807,17 @@ class Chats(APIView):
 
         serializer = ChatMessageSerializer(last_messages, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class Home(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        top_services = Orders.objects.values('service').annotate(
+            order_count=Count('service')
+        ).order_by('-order_count')[:10]
+        
+        service_ids = [service['service'] for service in top_services]
+        services = Services.objects.filter(id__in=service_ids)
+
+        serializer = ServiceListingDetailSerializer(services, many=True)
+        return Response(serializer.data,status=200)

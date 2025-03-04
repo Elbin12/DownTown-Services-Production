@@ -112,8 +112,10 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     def get_is_liked(self, obj):
         request = self.context.get('request')
-        interaction = Interactions.objects.filter(review=obj, user=request.user).first()
-        return interaction.is_liked if interaction else None
+        if request:
+            interaction = Interactions.objects.filter(review=obj, user=request.user).first()
+            return interaction.is_liked if interaction else None
+        return None
     
 class OrdersListingSerializer(serializers.ModelSerializer):
     user = UserGetSerializer(source='user.user_profile', read_only = True)
