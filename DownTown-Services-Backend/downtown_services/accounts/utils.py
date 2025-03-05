@@ -18,11 +18,14 @@ s3 = boto3.client('s3',
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
                 region_name=region_name)
 
-def upload_fileobj_to_s3(file_obj, object_name):
+def upload_fileobj_to_s3(file_obj, object_name, content_type=None):
     """Upload a file object to an S3 bucket"""
 
     try:
-        s3.upload_fileobj(file_obj, bucket_name, object_name, ExtraArgs={ 'ContentType': file_obj.content_type})
+        if content_type:
+            s3.upload_fileobj(file_obj, bucket_name, object_name, ExtraArgs={ 'ContentType': content_type})
+        else:
+            s3.upload_fileobj(file_obj, bucket_name, object_name, ExtraArgs={ 'ContentType': file_obj.content_type})
         print("Upload Successful")
         image_url = f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{object_name}"
         return image_url

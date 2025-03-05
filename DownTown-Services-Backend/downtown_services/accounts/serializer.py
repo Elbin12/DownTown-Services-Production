@@ -52,11 +52,12 @@ class UserGetSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'mob', 'first_name', 'last_name', 'dob','lat', 'lng', 'location', 'gender', 'profile_pic', 'is_Active', 'is_Admin', 'is_any_pending_payment']
     
     def get_profile_pic(self, obj):
-        image_url = create_presigned_url(str(obj.profile_pic))
-        print(image_url, 'kk')
-        if image_url:
-            print(image_url, 'll')
-            return image_url
+        if obj.profile_pic:
+            image_url = create_presigned_url(str(obj.profile_pic))
+            print(image_url, 'kk')
+            if image_url:
+                print(image_url, 'll')
+                return image_url
         return None
 
 

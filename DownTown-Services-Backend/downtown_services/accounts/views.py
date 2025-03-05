@@ -1,3 +1,4 @@
+from django.core.files.base import ContentFile
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -19,7 +20,7 @@ from .tasks import send_mail_task, send_notification
 from django.db.models import Q, Max
 from .utils import upload_fileobj_to_s3, create_presigned_url, AuthenticateIfJWTProvided, find_distance, find_distance_for_anonymoususer, get_nearby_services, get_nearby_services_for_anonymoususer, generate_otp
 
-import os, stripe
+import os, stripe, mimetypes
 from datetime import datetime
 from django.db.models import Count, OuterRef, Subquery
 import requests
@@ -185,19 +186,35 @@ class SignInWithGoogle(APIView):
         email = user_data['email']
         try:
             user = CustomUser.objects.get(email=email)
-            user_profile = UserProfile.objects.get(user=user)
+            user_profile = UserProfile.objects.filter(user=user).first()
             serializer = UserGetSerializer(user_profile)
             additional_data = serializer.data
             print('hello')
-        except:
+        except CustomUser.DoesNotExist:
             user = CustomUser.objects.create_user(email=email)
             user.save()
+            response = requests.get(user_data['picture'])
+            print(response, 'responseeee')
+            if response.status_code == 200:
+                    image_name = f"profile_pics/{user.id}_profile.jpg"
+                    file = ContentFile(response.content, name=image_name)
+                    print(file, 'fileeeee')
             profile = UserProfile.objects.create(
                     user=user, 
                     first_name=user_data['given_name'], 
                     last_name=user_data['family_name'],
-                    profile_pic=user_data['picture'],
                 )
+            if file:
+                file_extension = os.path.splitext(file.name)[1]
+                current_time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                unique_filename = f"{current_time_str}{file_extension}"
+                s3_file_path = f"users/profile_pic/{unique_filename}"
+                filename = "profile_pic.jpg"
+                content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+                image_url = upload_fileobj_to_s3(file, s3_file_path, content_type=content_type)
+                if image_url:
+                    profile.profile_pic = s3_file_path
+                    print("Image URL:", image_url)
             profile.save()
             additional_data = {
                 'first_name': user_data.get('given_name', ''),
