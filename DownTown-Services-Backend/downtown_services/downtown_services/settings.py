@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', '35.225.114.235', 'elbin.site', 'www.elbin.site']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', '35.225.114.235', 'elbin.live', 'www.elbin.live']
 
 
 # Application definition
@@ -75,9 +75,9 @@ CORS_ORIGIN_WHITELIST = (
   'http://127.0.0.1:3000',
   'http://35.225.114.235',
   'http://frontend:3000',
-  'http://elbin.site',
-  'https://elbin.site',
-  'https://www.elbin.site',
+  'http://elbin.live',
+  'https://elbin.live',
+  'https://www.elbin.live',
 )
 
 
